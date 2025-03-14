@@ -1,8 +1,20 @@
 ## Simple Signing Server for IBM Crypto Express Card
 
-
 ## Features
 
+Basic API Gateway to create Secp256k1, Ed25519 key pair, and Sign data and Verify signature.  
+Mariadb is provided as key store.
+
+## Running the server
+
+Follow installation instruction.  Start mariadb as a service.
+
+```bash
+[root@hyprh3a ep11signingserver]# ./server 
+2025/03/14 13:35:02 INFO Server running on https://localhost:9443
+2025/03/14 13:35:06 INFO GenerateKeyPair 019595b9-5657-776b-86d6-923f74bf856e
+2025/03/14 13:35:07 INFO GenerateKeyPair 019595b9-5aa3-76ac-8529-acfb4af72b68
+```
 
 ## Installation
 
@@ -11,7 +23,6 @@
 go mod init
 go mod tidy
 go build sigingserver.go
-
 
 ### Creating the mariadb key store
 
