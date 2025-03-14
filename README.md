@@ -16,12 +16,17 @@ go build sigingserver.go
 ### Creating the mariadb key store
 
 #### installing the mariadb software on RHEL
+
+```bash
 dnf install mariadb-server
 systemctl start mariadb
+```
 
 #### connecting 
+```bash
 > mysql -u root -p
-
+```
+```sql
 CREATE USER 'john'@'localhost' IDENTIFIED BY 'SecureP@ssw0rd123';
 CREATE DATABASE key_store;
 USE key_store;
@@ -33,28 +38,28 @@ CREATE TABLE `keys` (
          key_type VARCHAR(50) NOT NULL,
          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
      );
-
+```
 
 ### Generating TLS certificates for the server
-
+```bash
 openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -days 365 -nodes
-
+```
 ### Configuring the signing service
 
 Create a .env file in the current directory to specify how to connect Mariadb and the API key to use to connect the service.
-
+```
 DB_USER=john
 DB_PASSWORD=SecureP@ssw0rd123
 DB_HOST=127.0.0.1
 DB_PORT=3306
 DB_NAME=key_store
 API_KEY=mykey
-
+```
 
 ## Testing the service
 
 ### Creating keys
-
+```bash
 curl -k --request POST \
   --url https://localhost:9443/signing/api/v2/keys?type=ECDSA_SECP256K1 \
   --header 'X-API-Key: mykey' \
@@ -69,14 +74,14 @@ curl -k --request POST \
   --url https://localhost:9443/signing/api/v2/keys?type=EDDSA_ED25519 \
   --header 'X-API-Key: mykey' \
   --header 'Content-Type: application/json'
-
+```
 ### Signing
 
 
 ### Verifying signature
 
 Use the key id provided by the key creation call
-
+```bash
 curl  -k --request POST \
   --url https://localhost:9443/signing/api/v2/verify \
   --header 'Content-Type: application/json' \
@@ -85,4 +90,4 @@ curl  -k --request POST \
         "data" : "SGFsbG8gZGFzIGlzdCBlaW4gVGVzdA==",
         "signature" : "LjtkbKI7W/NQtlLKcm6+wZvx9mJAGoBz0eqDpk0rprp41WxCfIIgoNtIr6iRt37t/9gHPRn6Mrq23D9XuOxrLg=="
 }'
-
+```
