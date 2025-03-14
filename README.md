@@ -5,6 +5,9 @@
 Basic API Gateway to create Secp256k1, Ed25519 key pair, and Sign data and Verify signature.  
 Mariadb is provided as key store.
 
+HSM Domain have to be specified in server.go code.  See ep11.hsminit() call.
+Multple domains can be specified for high-availability or scalability.
+
 ## Running the server
 
 Follow installation instruction.  Start mariadb as a service.
@@ -88,6 +91,26 @@ curl -k --request POST \
 ```
 ### Signing
 
+```
+$ curl -ik --request POST   --url 'https://localhost:9443/signing/api/v2/keys?type=ECDSA_SECP256K1'   --header 'X-API-Key: mykey'   --header 'Content-Type: application/json' 
+HTTP/2 200 
+content-type: application/json
+content-length: 346
+date: Fri, 14 Mar 2025 17:42:38 GMT
+
+{"id":"019595c0-3b01-7326-a82a-9bf28d88369b","pubKey":"MFYwEAYHKoZIzj0CAQYFK4EEAAoDQgAEx7FZrKZGXl0ZLWniqzoEzNfngaheJ3wsFzmHUMbeddmTxA+dJ50/xd9w8/s6egFIwKWmBsctZkZ5QbMKPVSM1wQQUNlMc/vzE30iOfEyGRAmpQQgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAECAGD8fPXuoDxBAgAAAAAAAAAAQQUEAEAAAAAgCQAAIAkgAEACgAAAAEEIBR2S6pmmG4arzn6fzAAmmVpm3sgRaJE6oarrTXV0/99"}
+
+
+$ curl -k --request POST \
+  --url https://localhost:9443/signing/api/v2/sign \
+  --header 'X-API-Key: mykey' \
+  --header 'Content-Type: application/json' \
+  --data '{
+        "id": "019595c0-3b01-7326-a82a-9bf28d88369b",
+        "data" : "SGVsbG8gV29ybGQga2luZCBvZiB0ZXN0Cg=="
+}'
+DZ6QPx1F5eqPGjHp9LDGFRXcnBoVHzhrYB3gvprvwV0y1o+3tOpME0+2LvM0CBUTlEPLcH3dnQXzmwMj4gVztg==
+```
 
 ### Verifying signature
 
@@ -101,4 +124,27 @@ curl  -k --request POST \
         "data" : "SGFsbG8gZGFzIGlzdCBlaW4gVGVzdA==",
         "signature" : "LjtkbKI7W/NQtlLKcm6+wZvx9mJAGoBz0eqDpk0rprp41WxCfIIgoNtIr6iRt37t/9gHPRn6Mrq23D9XuOxrLg=="
 }'
+
+curl -ik --request POST   --url https://localhost:9443/signing/api/v2/verify   --header 'X-API-Key: mykey'   --header 'Content-Type: application/json'   --data '{
+        "id": "019595c0-3b01-7326-a82a-9bf28d88369b",
+        "data" : "SGVsbG8gV29ybGQga2luZCBvZiB0ZXN0Cg==",
+        "signature": "DZ6QPx1F5eqPGjHp9LDGFRXcnBoVHzhrYB3gvprvwV0y1o+3tOpME0+2LvM0CBUTlEPLcH3dnQXzmwMj4gVztg=="
+}'
+HTTP/2 200 
+content-length: 0
+date: Fri, 14 Mar 2025 17:47:55 GMT
+
+[root@hyprh3a ep11go]# curl -ik --request POST   --url https://localhost:9443/signing/api/v2/verify   --header 'X-API-Key: mykey'   --header 'Content-Type: application/json'   --data '{
+        "id": "019595c0-3b01-7326-a82a-9bf28d88369b",
+        "data" : "YmFsYmxhYmxhYmwK",
+        "signature": "DZ6QPx1F5eqPGjHp9LDGFRXcnBoVHzhrYB3gvprvwV0y1o+3tOpME0+2LvM0CBUTlEPLcH3dnQXzmwMj4gVztg=="
+}'
+HTTP/2 400 
+content-type: text/plain; charset=utf-8
+x-content-type-options: nosniff
+content-length: 30
+date: Fri, 14 Mar 2025 17:48:09 GMT
+
+Signature verification failed
+
 ```
