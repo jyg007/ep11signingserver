@@ -245,15 +245,21 @@ func signDataHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var mecha uint
+	var param []byte
 
 	switch keyType {
 	    case "ECDSA_SECP256K1": 
 			  mecha = C.CKM_ECDSA
+			  param = nil
 	    case "EDDSA_ED25519": 
 	    	  mecha = C.CKM_IBM_ED25519_SHA512
+	    	  param = nil
+	    case "ECDSA_BLS12":
+	    	  mecha = C.CKM_IBM_ECDSA_OTHER
+	    	  param = ep11.NewECSGParams(C.ECSG_IBM_BLS)
 	}
 
-    sig, err := ep11.SignSingle(target, ep11.Mech(mecha,nil),privateKeyBytes,dataBytes)
+    sig, err := ep11.SignSingle(target, ep11.Mech(mecha,param),privateKeyBytes,dataBytes)
 	if err != nil {
 		message := fmt.Sprintf("Error generating signature with key %s.", req.ID)
  		slog.Error(message,"error",err)
@@ -311,15 +317,21 @@ func verifySignatureHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var mecha uint
+	var param []byte
 
 	switch keyType {
 	    case "ECDSA_SECP256K1": 
 			  mecha = C.CKM_ECDSA
+			  param = nil
 	    case "EDDSA_ED25519": 
-	    	 mecha = C.CKM_IBM_ED25519_SHA512
+	    	  param = nil
+	    	  mecha = C.CKM_IBM_ED25519_SHA512
+	    case "ECDSA_BLS12":
+	    	  mecha = C.CKM_IBM_ECDSA_OTHER
+	    	  param = ep11.NewECSGParams(C.ECSG_IBM_BLS)
 	}
 
-    err = ep11.VerifySingle(target, ep11.Mech(mecha,nil),publicKeyBytes,dataBytes,sigBytes)
+    err = ep11.VerifySingle(target, ep11.Mech(mecha,param),publicKeyBytes,dataBytes,sigBytes)
 
     if err != nil  {
     		message := fmt.Sprintf("Error verifying signature with key %s with return code %d", req.ID,err)
@@ -500,8 +512,6 @@ func main() {
 		slog.Error("Database connection failed:", err)
 	}
 
-	// Add your domain here - adapter number and domain number.
-	// If multiple domain are added, make sure they have the same master key
 	target = ep11.HsmInit(os.Getenv("HSM")) 
 
 	rand.Seed(time.Now().UnixNano())
