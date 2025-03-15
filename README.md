@@ -68,7 +68,11 @@ DB_HOST=127.0.0.1
 DB_PORT=3306
 DB_NAME=key_store
 API_KEY=mykey
+HSM="3.19"
 ```
+
+The HSM environment variable is used to specify of list of domains.  Use the following syntax "adapter1.domain1 adapter2.domain2 ..."
+
 
 ## Testing the service
 

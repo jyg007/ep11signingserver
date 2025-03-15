@@ -502,7 +502,7 @@ func main() {
 
 	// Add your domain here - adapter number and domain number.
 	// If multiple domain are added, make sure they have the same master key
-	target = ep11.HsmInit(3,19) 
+	target = ep11.HsmInit(os.Getenv("HSM")) 
 
 	rand.Seed(time.Now().UnixNano())
 
