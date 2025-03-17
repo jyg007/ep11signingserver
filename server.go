@@ -17,17 +17,15 @@ import (
 	"math/rand"
 	"net/http"
 	"os"
-	 "strconv"
-	//"bytes"
+	"strconv"
 	"time"
     "encoding/asn1"
 
     "signingserver/ep11"
-    "signingserver/mariadbks"
+    ks "signingserver/sqliteks"
 
 	"github.com/google/uuid"
 	"github.com/joho/godotenv"
-
 )
 
 var target ep11.Target_t 
@@ -161,7 +159,7 @@ func generateKeyHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	slog.Info("GenerateKeyPair " + keyID)
 
-	err = mariadbks.AddKey(&keyID,&keyType,sk,pk)
+	err = ks.AddKey(&keyID,&keyType,sk,pk)
 
    if err != nil {
  		slog.Error("Inserting key into db error","error",err)
@@ -211,7 +209,7 @@ func signDataHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Retrieve private key from database
-	privateKeyBytes, _ , keyType, err := mariadbks.GetPrivateKeyFromDB(&req.ID)
+	privateKeyBytes, _ , keyType, err := ks.GetPrivateKeyFromDB(&req.ID)
 	if err != nil {
 		http.Error(w, "Private key not found", http.StatusNotFound)
 		return
@@ -282,7 +280,7 @@ func verifySignatureHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Retrieve private key from database
-	_ , publicKeyBytes , keyType, err := mariadbks.GetPrivateKeyFromDB(&req.ID)
+	_ , publicKeyBytes , keyType, err := ks.GetPrivateKeyFromDB(&req.ID)
 	
 	if err != nil {
 		http.Error(w, "Private key not found", http.StatusInternalServerError)
@@ -414,7 +412,7 @@ func generateMultiKeyHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		slog.Info("GenerateKeyPair " + keyID)
 
-		err = mariadbks.AddKey(&keyID,&keyType,sk,pk)
+		err = ks.AddKey(&keyID,&keyType,sk,pk)
 
 	   if err != nil {
 	 		slog.Error("Inserting key into db error","error",err)
@@ -454,11 +452,11 @@ func main() {
 		return
 	}     
 
-    err = mariadbks.Init()
+    err = ks.Init()
     if err != nil {
                 slog.Error("Failed to connect to database:", err)
     }
-    defer mariadbks.Close()
+    defer ks.Close()
 
 
 	target = ep11.HsmInit(os.Getenv("HSM")) 

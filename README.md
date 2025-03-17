@@ -128,7 +128,9 @@ curl  -k --request POST \
         "data" : "SGFsbG8gZGFzIGlzdCBlaW4gVGVzdA==",
         "signature" : "LjtkbKI7W/NQtlLKcm6+wZvx9mJAGoBz0eqDpk0rprp41WxCfIIgoNtIr6iRt37t/9gHPRn6Mrq23D9XuOxrLg=="
 }'
+```
 
+```
 curl -ik --request POST   --url https://localhost:9443/signing/api/v2/verify   --header 'X-API-Key: mykey'   --header 'Content-Type: application/json'   --data '{
         "id": "019595c0-3b01-7326-a82a-9bf28d88369b",
         "data" : "SGVsbG8gV29ybGQga2luZCBvZiB0ZXN0Cg==",

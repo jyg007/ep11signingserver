@@ -1,0 +1,9 @@
+sigb64=$3
+datab64=$(echo "$2" | base64 -w0)
+key=$1
+
+curl -k --request POST   --url https://localhost:9443/signing/api/v2/verify   --header 'X-API-Key: mykey'   --header 'Content-Type: application/json'   --data "{
+        \"id\": \"$key\",
+        \"data\" : \"$datab64\",
+        \"signature\": \"$sigb64\"
+}"
