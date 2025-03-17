@@ -8,6 +8,9 @@ Mariadb is provided as key store.
 HSM Domain have to be specified in server.go code.  See ep11.hsminit() call.
 Multple domains can be specified for high-availability or scalability.
 
+Mariadb keystore
+Sqlite keystore
+
 ## Running the server
 
 Follow installation instruction.  Start mariadb as a service.
@@ -21,13 +24,26 @@ Follow installation instruction.  Start mariadb as a service.
 
 ## Installation
 
+Select the keystore you want to use 
+```go
+    ks "signingserver/sqliteks"
+```
+or
+```go
+    ks "signingserver/mariadbks"
+```
+
+sqlite will create the database.db file and the table automatically
+
 ### Compiling
 
 go mod init
 go mod tidy
 go build sigingserver.go
 
-### Creating the mariadb key store
+### Using mariadb key store
+
+mariadb will need to be installed as a service on the system where the ep11 signing service runs.
 
 #### installing the mariadb software on RHEL
 
@@ -119,16 +135,8 @@ DZ6QPx1F5eqPGjHp9LDGFRXcnBoVHzhrYB3gvprvwV0y1o+3tOpME0+2LvM0CBUTlEPLcH3dnQXzmwMj
 ### Verifying signature
 
 Use the key id provided by the key creation call
-```bash
-curl  -k --request POST \
-  --url https://localhost:9443/signing/api/v2/verify \
-  --header 'Content-Type: application/json' \
-  --data '{
-         "id": "c83e9f36-eb0b-43ca-8d89-345eb4dcac40",
-        "data" : "SGFsbG8gZGFzIGlzdCBlaW4gVGVzdA==",
-        "signature" : "LjtkbKI7W/NQtlLKcm6+wZvx9mJAGoBz0eqDpk0rprp41WxCfIIgoNtIr6iRt37t/9gHPRn6Mrq23D9XuOxrLg=="
-}'
-```
+
+A correct signature with return a 200 Sucess code.
 
 ```
 curl -ik --request POST   --url https://localhost:9443/signing/api/v2/verify   --header 'X-API-Key: mykey'   --header 'Content-Type: application/json'   --data '{
@@ -139,7 +147,10 @@ curl -ik --request POST   --url https://localhost:9443/signing/api/v2/verify   -
 HTTP/2 200 
 content-length: 0
 date: Fri, 14 Mar 2025 17:47:55 GMT
+```
+An incorrect signature retrusn a 400 Error code and a plain message.
 
+```
 [root@hyprh3a ep11go]# curl -ik --request POST   --url https://localhost:9443/signing/api/v2/verify   --header 'X-API-Key: mykey'   --header 'Content-Type: application/json'   --data '{
         "id": "019595c0-3b01-7326-a82a-9bf28d88369b",
         "data" : "YmFsYmxhYmxhYmwK",
