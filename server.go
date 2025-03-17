@@ -23,19 +23,14 @@ import (
     "encoding/asn1"
 
     "signingserver/ep11"
+    "signingserver/mariadbks"
 
 	"github.com/google/uuid"
-
 	"github.com/joho/godotenv"
-	_ "github.com/go-sql-driver/mysql"
 
-	"database/sql"
 )
 
 var target ep11.Target_t 
-
-// Database connection
-var db *sql.DB
 
 var apiKey string
 
@@ -69,26 +64,6 @@ func apiKeyMiddleware(next http.HandlerFunc) http.HandlerFunc {
 		}
 		next(w, r)
 	}
-}
-
-func getPrivateKeyFromDB(keyID string) ([]byte,[]byte, string, error) {
-	var base64Value,pkb64, keyType string
-	err := db.QueryRow("SELECT private_key, public_key, key_type FROM `keys` WHERE id = ?", keyID).Scan(&base64Value,&pkb64,&keyType)
-	if err != nil {
-		return nil, nil, "",err
-	}
-
-	// Decode base64 private key
-	privateKeyBytes, err := base64.StdEncoding.DecodeString(base64Value)
-	if err != nil {
-		return nil, nil, "",err
-	}
-	publicKeyBytes, err := base64.StdEncoding.DecodeString(pkb64)
-	if err != nil {
-		return nil, nil, "",err
-	}
-
-	return privateKeyBytes, publicKeyBytes, keyType,nil
 }
 
 
@@ -186,13 +161,11 @@ func generateKeyHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	slog.Info("GenerateKeyPair " + keyID)
 
-
-   // fmt.Printf("Private Key: %x\n\n",generateKeyPairResponse.PrivKeyBytes)
-   	_, err = db.Exec("INSERT INTO `keys` (id, key_type, private_key, public_key) VALUES (?, ?, ?,?)", keyID, keyType, base64.StdEncoding.EncodeToString(sk),base64.StdEncoding.EncodeToString(pk))
+	err = mariadbks.AddKey(&keyID,&keyType,sk,pk)
 
    if err != nil {
  		slog.Error("Inserting key into db error","error",err)
- 		http.Error(w, "Error when insertinf key in key store", http.StatusInternalServerError)
+ 		http.Error(w, "Error when inserting key in key store", http.StatusInternalServerError)
  		return
     }
 
@@ -238,7 +211,7 @@ func signDataHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Retrieve private key from database
-	privateKeyBytes, _ , keyType, err := getPrivateKeyFromDB(req.ID)
+	privateKeyBytes, _ , keyType, err := mariadbks.GetPrivateKeyFromDB(&req.ID)
 	if err != nil {
 		http.Error(w, "Private key not found", http.StatusNotFound)
 		return
@@ -309,7 +282,7 @@ func verifySignatureHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Retrieve private key from database
-	_ , publicKeyBytes , keyType, err := getPrivateKeyFromDB(req.ID)
+	_ , publicKeyBytes , keyType, err := mariadbks.GetPrivateKeyFromDB(&req.ID)
 	
 	if err != nil {
 		http.Error(w, "Private key not found", http.StatusInternalServerError)
@@ -441,7 +414,7 @@ func generateMultiKeyHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		slog.Info("GenerateKeyPair " + keyID)
 
-	   	_, err = db.Exec("INSERT INTO `keys` (id, key_type, private_key, public_key) VALUES (?, ?, ?,?)", keyID, keyType, base64.StdEncoding.EncodeToString(sk),base64.StdEncoding.EncodeToString(pk))
+		err = mariadbks.AddKey(&keyID,&keyType,sk,pk)
 
 	   if err != nil {
 	 		slog.Error("Inserting key into db error","error",err)
@@ -479,38 +452,14 @@ func main() {
 	if err != nil {
 		slog.Error("Error loading .env file")
 		return
-	}
+	}     
 
-	// MariaDB connection
-	//socketPath := "/var/lib/mysql/mysql.sock" 
-	  
-/*
-	dsn := fmt.Sprintf("%s:%s@unix(%s)/%s?parseTime=true",
-		os.Getenv("DB_USER"),
-		os.Getenv("DB_PASSWORD"),
-		socketPath,
-		os.Getenv("DB_NAME"),
-	)
-	*/
-	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true",
-		os.Getenv("DB_USER"),
-		os.Getenv("DB_PASSWORD"),
-		os.Getenv("DB_HOST"),
-		os.Getenv("DB_PORT"),
-		os.Getenv("DB_NAME"),
-	)
+    err = mariadbks.Init()
+    if err != nil {
+                slog.Error("Failed to connect to database:", err)
+    }
+    defer mariadbks.Close()
 
-	db, err = sql.Open("mysql", dsn)
-	if err != nil {
-		slog.Error("Failed to connect to database:", err)
-	}
-	defer db.Close()
-
-	// Verify database connection
-	err = db.Ping()
-	if err != nil {
-		slog.Error("Database connection failed:", err)
-	}
 
 	target = ep11.HsmInit(os.Getenv("HSM")) 
 
