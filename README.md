@@ -42,37 +42,6 @@ go mod init
 go mod tidy
 go build sigingserver.go
 
-### Using mariadb key store
-
-mariadb will need to be installed as a service on the system where the ep11 signing service runs.
-
-#### installing the mariadb software on RHEL
-
-```bash
-dnf install mariadb-server
-systemctl start mariadb
-```
-
-#### connecting 
-```bash
-> mysql -u root -p
-```
-```sql
-CREATE USER 'john'@'localhost' IDENTIFIED BY 'SecureP@ssw0rd123';
-CREATE DATABASE key_store;
-USE key_store;
-GRANT ALL PRIVILEGES ON key_store.* TO 'john'@'localhost';
-CREATE TABLE `keys` (
-         id VARCHAR(36) PRIMARY KEY,
-         private_key TEXT NOT NULL,
-         public_key TEXT NOT NULL,
-         key_type VARCHAR(50) NOT NULL,
-         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-     );
-```
-
-This table will be automatically created if is does not exist.
-
 ### Generating TLS certificates for the server
 ```bash
 openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -days 365 -nodes
@@ -193,4 +162,74 @@ and when incorrect:
 ```
 [root@hyprh3a ep11signingserver]# ./verify 0195a874-83f4-72f4-a703-e7f37509362b helloworl pcm1ZuIG9rv92oxlH+5erTwW7T55p26uq19tNuDioNDKfZ0s9m0PVAUKxgeV5r2HxQBVcz5P1Z4m0KYsYXhloQ==
 Signature verification failed 
+```
+
+# Databases
+
+## Using Mariadb
+
+mariadb will need to be installed as a service on the system where the ep11 signing service runs.
+
+### Installing the mariadb software on RHEL
+
+```bash
+dnf install mariadb-server
+systemctl start mariadb
+```
+
+### Connecting the instance
+```bash
+> mysql -u root -p
+```
+```sql
+CREATE USER 'john'@'localhost' IDENTIFIED BY 'SecureP@ssw0rd123';
+CREATE DATABASE key_store;
+USE key_store;
+GRANT ALL PRIVILEGES ON key_store.* TO 'john'@'localhost';
+CREATE TABLE `keys` (
+         id VARCHAR(36) PRIMARY KEY,
+         private_key TEXT NOT NULL,
+         public_key TEXT NOT NULL,
+         key_type VARCHAR(50) NOT NULL,
+         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+     );
+```
+
+This table will be automatically created if is does not exist.
+
+username=# \c key_store
+
+
+## Using Postgres
+
+### Install postgresql on RHEL
+
+An easy way can be to use a container:
+
+```bash
+podman pull postgres
+mkdir -p /var/lib/data
+podman run --name postgres -e POSTGRES_USER=username -e POSTGRES_PASSWORD=password -p 5
+```
+
+### Connection the postgresql server
+
+Use the psql CLI in a terminal
+
+```
+PGPASSWORD=password psql -h localhost -p 5432 -U username
+```
+
+Create a database using the CLI:
+
+```
+CREATE DATABASE key_store;
+```
+
+The keys table is to be create automatically if it does not exist
+
+To connect the database, use the psql CLI and connect.  You can then query the keys table that will be created by the ep11 signer.
+
+```
+username=# \c key_store
 ```

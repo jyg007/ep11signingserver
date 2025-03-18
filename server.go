@@ -23,9 +23,9 @@ import (
 
     "signingserver/ep11"
 
-   ks "signingserver/sqliteks"
-//    ks "signingserver/postgresqlks"
-  //  ks "signingserver/mariadbks"
+ //  ks "signingserver/sqliteks"
+     ks "signingserver/postgresks"
+ //  ks "signingserver/mariadbks"
 
 	"github.com/google/uuid"
 	"github.com/joho/godotenv"
@@ -312,8 +312,7 @@ func generateMultiKeyHandler(w http.ResponseWriter, r *http.Request) {
 	var publicKeyECTemplate ep11.Attributes
 	var privateKeyECTemplate ep11.Attributes
 
-
-		switch keyType {
+	switch keyType {
 	    case "ECDSA_SECP256K1": 
 		    ecParameters, err := asn1.Marshal(ep11.OIDNamedCurveSecp256k1)
 		    if err != nil {
@@ -348,8 +347,9 @@ func generateMultiKeyHandler(w http.ResponseWriter, r *http.Request) {
 		    }
 	}
 
+	var keys []KeyResponse
 
-	for i:=0;i<=keyNumber;i++ {  
+	for i:=0;i<keyNumber;i++ {  
 	 
     	pk, sk , err  := ep11.GenerateKeyPair(target, ep11.Mech(C.CKM_EC_KEY_PAIR_GEN, nil), publicKeyECTemplate,privateKeyECTemplate)
     	if err != nil {
@@ -363,32 +363,28 @@ func generateMultiKeyHandler(w http.ResponseWriter, r *http.Request) {
 		keyIDuuid , err := uuid.NewV7()
 		if err != nil {
 			slog.Error("Failed to generate UUIDv7","error",err)
-			return
 		} else {
 			keyID=keyIDuuid.String()
+		
+			slog.Info("GenerateKeyPair " + keyID)
+
+			err = ks.AddKey(&keyID,&keyType,sk,pk)
+
+		   if err != nil {
+		 		slog.Error("Inserting key into db error","error",err)
+		    } else {
+		    	keys = append(keys, KeyResponse{
+					ID:     keyID,
+					PubKey: base64.StdEncoding.EncodeToString(pk),
+				})
+		    }
 		}
-		slog.Info("GenerateKeyPair " + keyID)
-
-		err = ks.AddKey(&keyID,&keyType,sk,pk)
-
-	   if err != nil {
-	 		slog.Error("Inserting key into db error","error",err)
-	 		return
-	    }
 	}
-/*
-	pubKeyBase64 := base64.StdEncoding.EncodeToString(pk)
 
-	// Create response
-	response := KeyResponse{
-		ID:     keyID,
-		PubKey: pubKeyBase64,	
-	}
-*/
 	// Send response
-//	w.Header().Set("Content-Type", "application/json")
-
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(keys)
 }
 
 
