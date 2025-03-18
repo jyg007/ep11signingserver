@@ -145,7 +145,7 @@ Signature verification failed
 
 ### Test Tooling
 
-The `genkey`, `sign`, `verify` are curl command wrapper to easily invoke the API server using mykey as default API key and secp256k1 as elliptic curve:
+The `genkey`, `sign`, `verify`, `genkeymulti` are curl command wrappers provided to easily invoke the API server using `mykey` as default API key value and secp256k1 as elliptic curve:
 
 1. Generate a key pair
 ```bash
@@ -217,7 +217,7 @@ PGPASSWORD=password psql -h localhost -p 5432 -U username
 
 Create a database using the CLI:
 
-```
+```sql
 CREATE DATABASE key_store;
 ```
 
