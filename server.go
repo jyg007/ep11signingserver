@@ -119,26 +119,6 @@ func generateKeyHandler(w http.ResponseWriter, r *http.Request) {
 		            C.CKA_PRIVATE:   true,
 		            C.CKA_SENSITIVE: true,
 		    }
-   	    case "ECDSA_BLS12": 
-		    ecParameters, err := asn1.Marshal(ep11.OIDBLS12_381ET)
-		    if err != nil {
-		            panic(fmt.Errorf("Unable to encode parameter OID: %s", err))
-		    }
-
-		    publicKeyECTemplate = ep11.Attributes{
-		            C.CKA_EC_PARAMS: ecParameters,
-		            C.CKA_VERIFY:    true,
-		            C.CKA_IBM_USE_AS_DATA: true,
-		            C.CKA_KEY_TYPE:        C.CKK_EC,
-		    }
-		    privateKeyECTemplate = ep11.Attributes{
-		            C.CKA_EC_PARAMS: ecParameters,
-		            C.CKA_SIGN:      true,
-		            C.CKA_PRIVATE:   true,
-		            C.CKA_SENSITIVE: true,
-		            C.CKA_IBM_USE_AS_DATA: true,
-		            C.CKA_KEY_TYPE:        C.CKK_EC,
-		    }
 		}
 
     pk, sk , err  := ep11.GenerateKeyPair(target, ep11.Mech(C.CKM_EC_KEY_PAIR_GEN, nil), publicKeyECTemplate,privateKeyECTemplate)
@@ -228,9 +208,6 @@ func signDataHandler(w http.ResponseWriter, r *http.Request) {
 	    case "EDDSA_ED25519": 
 	    	  mecha = C.CKM_IBM_ED25519_SHA512
 	    	  param = nil
-	    case "ECDSA_BLS12":
-	    	  mecha = C.CKM_IBM_ECDSA_OTHER
-	    	  param = ep11.NewECSGParams(C.ECSG_IBM_BLS)
 	}
 
     sig, err := ep11.SignSingle(target, ep11.Mech(mecha,param),privateKeyBytes,dataBytes)
@@ -300,9 +277,6 @@ func verifySignatureHandler(w http.ResponseWriter, r *http.Request) {
 	    case "EDDSA_ED25519": 
 	    	  param = nil
 	    	  mecha = C.CKM_IBM_ED25519_SHA512
-	    case "ECDSA_BLS12":
-	    	  mecha = C.CKM_IBM_ECDSA_OTHER
-	    	  param = ep11.NewECSGParams(C.ECSG_IBM_BLS)
 	}
 
     err = ep11.VerifySingle(target, ep11.Mech(mecha,param),publicKeyBytes,dataBytes,sigBytes)
@@ -371,26 +345,6 @@ func generateMultiKeyHandler(w http.ResponseWriter, r *http.Request) {
 		            C.CKA_SIGN:      true,
 		            C.CKA_PRIVATE:   true,
 		            C.CKA_SENSITIVE: true,
-		    }
-   	    case "ECDSA_BLS12": 
-		    ecParameters, err := asn1.Marshal(ep11.OIDBLS12_381ET)
-		    if err != nil {
-		            panic(fmt.Errorf("Unable to encode parameter OID: %s", err))
-		    }
-
-		    publicKeyECTemplate = ep11.Attributes{
-		            C.CKA_EC_PARAMS: ecParameters,
-		            C.CKA_VERIFY:    true,
-		            C.CKA_IBM_USE_AS_DATA: true,
-		            C.CKA_KEY_TYPE:        C.CKK_EC,
-		    }
-		    privateKeyECTemplate = ep11.Attributes{
-		            C.CKA_EC_PARAMS: ecParameters,
-		            C.CKA_SIGN:      true,
-		            C.CKA_PRIVATE:   true,
-		            C.CKA_SENSITIVE: true,
-		            C.CKA_IBM_USE_AS_DATA: true,
-		            C.CKA_KEY_TYPE:        C.CKK_EC,
 		    }
 	}
 
