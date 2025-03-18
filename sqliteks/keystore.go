@@ -31,7 +31,8 @@ func Init() error {
 		id TEXT PRIMARY KEY,
 		key_type TEXT NOT NULL,
 		private_key TEXT NOT NULL,
-		public_key TEXT NOT NULL
+		public_key TEXT NOT NULL,
+		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 	);
 	`
 	_, err = db.Exec(createTableQuery)

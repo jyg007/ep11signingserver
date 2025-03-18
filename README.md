@@ -24,7 +24,8 @@ Follow installation instruction.  Start mariadb as a service.
 
 ## Installation
 
-Select the keystore you want to use 
+Select the keystore you want to use by modifying the server.go code at the top by selecting the right module to import for the key store:
+
 ```go
     ks "signingserver/sqliteks"
 ```
@@ -69,6 +70,8 @@ CREATE TABLE `keys` (
          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
      );
 ```
+
+This table will be automatically created if is does not exist.
 
 ### Generating TLS certificates for the server
 ```bash
@@ -164,4 +167,30 @@ date: Fri, 14 Mar 2025 17:48:09 GMT
 
 Signature verification failed
 
+```
+
+### Test Tooling
+
+The `genkey`, `sign`, `verify` are curl command wrapper to easily invoke the API server using mykey as default API key and secp256k1 as elliptic curve:
+
+1. Generate a key pair
+```bash
+[root@hyprh3a ep11signingserver]# ./genkey
+{"id":"0195a874-83f4-72f4-a703-e7f37509362b","pubKey":"MFYwEAYHKoZIzj0CAQYFK4EEAAoDQgAEzwtho2aMwHh/RgEjZaXbCIWIK8TVYrPsnXE/5Q4qjfABSLndLkNx1FNfP0BTeYAWg1BKcHOnS5J2gXxl0Zr0IAQQUNlMc/vzE30iOfEyGRAmpQQgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAECLE8G+WEeLk5BAgAAAAAAAAAAQQUEAEAAAAAgCQAAIAkgAEACgAAAAEEIHIyjpg5NwEY1vxm3f+3KDwS/HkUW8ZyhkS7/AzmNkYW"}
+```
+
+2. Generate a signature for a piece of data
+```
+[root@hyprh3a ep11signingserver]# ./sign 0195a874-83f4-72f4-a703-e7f37509362b helloworld
+pcm1ZuIG9rv92oxlH+5erTwW7T55p26uq19tNuDioNDKfZ0s9m0PVAUKxgeV5r2HxQBVcz5P1Z4m0KYsYXhloQ==
+```
+3. Verify this signature
+```
+[root@hyprh3a ep11signingserver]# ./verify 0195a874-83f4-72f4-a703-e7f37509362b helloworld pcm1ZuIG9rv92oxlH+5erTwW7T55p26uq19tNuDioNDKfZ0s9m0PVAUKxgeV5r2HxQBVcz5P1Z4m0KYsYXhloQ==
+```
+
+and when incorrect:
+```
+[root@hyprh3a ep11signingserver]# ./verify 0195a874-83f4-72f4-a703-e7f37509362b helloworl pcm1ZuIG9rv92oxlH+5erTwW7T55p26uq19tNuDioNDKfZ0s9m0PVAUKxgeV5r2HxQBVcz5P1Z4m0KYsYXhloQ==
+Signature verification failed 
 ```

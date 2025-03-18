@@ -44,10 +44,11 @@ func Init() error {
 
 	// Create table if it doesn't exist
 	createTableQuery := "CREATE TABLE IF NOT EXISTS `keys` (" +
-	"id VARCHAR(255) PRIMARY KEY, " +
-	"key_type VARCHAR(50) NOT NULL, " +
+	"id VARCHAR(36) PRIMARY KEY, " +
+	"key_type VARCHAR(15) NOT NULL, " +
 	"private_key TEXT NOT NULL, " +
 	"public_key TEXT NOT NULL" +
+	"created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP" +
 	");"
 	
         _, err = db.Exec(createTableQuery)
