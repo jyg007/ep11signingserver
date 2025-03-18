@@ -10,6 +10,7 @@ Multple domains can be specified for high-availability or scalability.
 
 Mariadb keystore
 Sqlite keystore
+PostgreSQL keystore
 
 ## Running the server
 
@@ -28,6 +29,10 @@ Select the keystore you want to use by modifying the server.go code at the top b
 
 ```go
     ks "signingserver/sqliteks"
+```
+or
+```go
+    ks "signingserver/postgresks"
 ```
 or
 ```go
