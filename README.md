@@ -191,19 +191,9 @@ CREATE USER 'john'@'localhost' IDENTIFIED BY 'SecureP@ssw0rd123';
 CREATE DATABASE key_store;
 USE key_store;
 GRANT ALL PRIVILEGES ON key_store.* TO 'john'@'localhost';
-CREATE TABLE `keys` (
-         id VARCHAR(36) PRIMARY KEY,
-         private_key TEXT NOT NULL,
-         public_key TEXT NOT NULL,
-         key_type VARCHAR(50) NOT NULL,
-         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-     );
 ```
 
-This table will be automatically created if is does not exist.
-
-username=# \c key_store
-
+The ep11 server will create the keys table if it does not exist.
 
 ## Using Postgres
 

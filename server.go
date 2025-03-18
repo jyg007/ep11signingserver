@@ -23,8 +23,8 @@ import (
 
     "signingserver/ep11"
 
- //  ks "signingserver/sqliteks"
-     ks "signingserver/postgresks"
+    ks "signingserver/sqliteks"
+ //   ks "signingserver/postgresks"
  //  ks "signingserver/mariadbks"
 
 	"github.com/google/uuid"
