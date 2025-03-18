@@ -1,0 +1,1 @@
+curl -k --request POST   --url 'https://localhost:9443/signing/api/v2/keys?type=ECDSA_SECP256K1'   --header 'X-API-Key: mykey'   --header 'Content-Type: application/json'

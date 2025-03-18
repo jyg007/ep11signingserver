@@ -36,12 +36,29 @@ func Init() error {
 	if err != nil {
 		return err
 	}
-//	defer db.Close()
+
+	err = db.Ping()
+	if err != nil {
+		return err
+	}
+
+	// Create table if it doesn't exist
+	createTableQuery := "CREATE TABLE IF NOT EXISTS `keys` (" +
+	"id VARCHAR(255) PRIMARY KEY, " +
+	"key_type VARCHAR(50) NOT NULL, " +
+	"private_key TEXT NOT NULL, " +
+	"public_key TEXT NOT NULL" +
+	");"
+	
+        _, err = db.Exec(createTableQuery)
+	if err != nil {
+		return fmt.Errorf("failed to create table: %v", err)
+	}
+
 
 	// Verify database connection
-	err = db.Ping()
 	
-	return err
+	return nil
 
 }
 
