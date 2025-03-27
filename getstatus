@@ -1,0 +1,2 @@
+curl -k  --header 'X-API-Key: mykey'   --header 'Content-Type: application/json' https://localhost:9443/signing/api/v2/status
+

@@ -387,6 +387,71 @@ func generateMultiKeyHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(keys)
 }
 
+//*********************************************************************************************************
+//*********************************************************************************************************
+
+// Define the structure for the response
+type StatusResponse struct {
+	StatusCode int    `json:"status_code"`
+	Msg        string `json:"text"`
+}
+
+// Handler for the /status endpoint
+func statusHandler(w http.ResponseWriter, r *http.Request) {
+	// Validate request method
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+
+	// Set the content-type to application/json
+	w.Header().Set("Content-Type", "application/json")
+	
+
+	_ , err  := ep11.GetMechanismList(target)
+	if err != nil {
+		response := StatusResponse{
+			StatusCode: http.StatusInternalServerError,
+			Msg:        err.Error(),
+		}
+		// Set headers and status code
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+
+		// Encode and send the JSON response
+		json.NewEncoder(w).Encode(response)
+		return
+	}
+
+	err = ks.Ping()
+	if err != nil {
+		response := StatusResponse{
+			StatusCode: http.StatusInternalServerError,
+			Msg:        err.Error(),
+		}
+		// Set headers and status code
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+
+		// Encode and send the JSON response
+		json.NewEncoder(w).Encode(response)
+		return
+	}
+
+	// Define the response
+	response := StatusResponse{
+		StatusCode: 200,
+		Msg:        "Service is up and running",
+	}
+	
+	// Send the JSON response
+	w.WriteHeader(http.StatusOK) // Setting status code
+	if err := json.NewEncoder(w).Encode(response); err != nil {
+		http.Error(w, "Unable to encode JSON response", http.StatusInternalServerError)
+	}
+}
+
 
 //*********************************************************************************************************
 //*********************************************************************************************************
@@ -411,7 +476,6 @@ func main() {
     }
     defer ks.Close()
 
-
 	target = ep11.HsmInit(os.Getenv("HSM")) 
 
 	rand.Seed(time.Now().UnixNano())
@@ -429,6 +493,7 @@ func main() {
 	http.HandleFunc("/signing/api/v2/multikeys", apiKeyMiddleware(generateMultiKeyHandler))
 	http.HandleFunc("/signing/api/v2/sign", apiKeyMiddleware(signDataHandler))
 	http.HandleFunc("/signing/api/v2/verify", apiKeyMiddleware(verifySignatureHandler))
+	http.HandleFunc("/signing/api/v2/status", apiKeyMiddleware(statusHandler))
 
 	// Start HTTPS server on port 9443
 	slog.Info("Server running on https://localhost:9443")

@@ -81,3 +81,9 @@ func GetPrivateKeyFromDB(keyID *string) ([]byte, []byte, string, error) {
 
 	return privateKeyBytes, publicKeyBytes, keyType, nil
 }
+
+func Ping() error {
+        return db.Ping()
+}
+
+
